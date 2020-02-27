@@ -56,6 +56,7 @@ sudo apt install screen
 ## install numpi, hdf5  
 ```
 sudo apt-get install python3-numpy 
+sudo apt-get install libhdf5-serial-dev
 sudo apt-get install libhdf5
 sudo pip3 install h5py
 ```
