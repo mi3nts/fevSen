@@ -79,13 +79,19 @@ sudo apt-get install python3-opencv
 sudo apt-get install guvcview
 ```  
   
-## install purethermal and test thermal 
+## Install libvuc on the home folder 
 ```
-https://github.com/groupgets/purethermal1-uvc-capture.git
-git clone https://github.com/groupgets/purethermal1-uvc-capture.git
-python3 opencv-capture.py 
-sudo python3 uvc-deviceinfo.py 
+cd ~
+git clone https://github.com/ktossell/libuvc
+cd libuvc
+mkdir build
+cd build
+cmake ..
+make && sudo make install
 ```
+Then move the libuvc.so file to the scr folder from the build folder. Then go back to the fevsev repo and run `python3 uvc-deviceinfr.py` after connecting the thermal module. This will provide the serial number for the thermal module. 
+
+
 
 ## git configure 
 ```
