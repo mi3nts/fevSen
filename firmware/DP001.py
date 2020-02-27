@@ -65,7 +65,7 @@ def display_temperature(img, val_k, loc, color):
 def getLeftWebCamIndex(myCmd):
     lines = myCmd.splitlines()
     for num, name in enumerate(lines, start=1):
-        if "7-4" in name:
+        if "2.3" in name:
             camString =  int(lines[num].strip().replace("/dev/video",""))
             return  True ,camString;
 
@@ -75,7 +75,7 @@ def getLeftWebCamIndex(myCmd):
 def getRightWebCamIndex(myCmd):
     lines = myCmd.splitlines()
     for num, name in enumerate(lines, start=1):
-        if "7-5" in name:
+        if "2.4" in name:
             camString =  int(lines[num].strip().replace("/dev/video",""))
             return True, camString;
 
@@ -163,8 +163,8 @@ def update(i):
     retRight, rightImage = capRight.read()
 
     thermalData   = cv2.resize(thermalDataPre[:,:], (640, 480))
-    thermalKelvin = thermalData;
-    thermalCelcius = ktoc(thermalData);
+    thermalKelvin = thermalData
+    thermalCelcius = ktoc(thermalData)
 
 
     frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
@@ -215,15 +215,10 @@ def update(i):
 
     threeWayImageName     = "threeWayImageDataSets/"+ getImagePathTailHdf5(dateTime,'hdf5ThreeWay')
 
-
-
-
     im1.set_data(cv2.cvtColor(leftImage, cv2.COLOR_BGR2RGB))
     im2.set_data(cv2.cvtColor(rightImage, cv2.COLOR_BGR2RGB))
     im3.set_data(distanceImageF)
     im4.set_data(finalCelciusImageF *7)
-    cv2.imwrite('lk.png',leftImage)
-
 
     # hf = h5py.File(threeWayImageName, 'w')
     #
@@ -234,31 +229,20 @@ def update(i):
 
 
 
-def grab_frame(cap):
-    ret,frame = cap.read()
-    return cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-
-
-
-
-
-
 myCmd = os.popen('v4l2-ctl --list-devices').read()
 
 leftCamIndex  = getLeftWebCamIndex(myCmd)[1]
 rightCamIndex  = getRightWebCamIndex(myCmd)[1]
 
-
 #Initiate the two cameras
-capLeft       = cv2.VideoCapture(leftCamIndex)
-capRight      = cv2.VideoCapture(rightCamIndex)
 
-time.sleep(10)
 BUF_SIZE = 2
 q = Queue(BUF_SIZE)
 
+capLeft       = cv2.VideoCapture(leftCamIndex)
+capRight      = cv2.VideoCapture(rightCamIndex)
 
-
+thermalDataPre = q.get(True, 500)
 
 # cv2.destroyAllWindows()
 
@@ -362,10 +346,8 @@ def main():
       try:
         startTime = time.time()
         # your code
-        ani = FuncAnimation(plt.gcf(), update, interval=0)
+        ani = FuncAnimation(plt.gcf(), update, interval=300)
         plt.show()
-
-
         capLeft.release()
         capRight.release()
 
