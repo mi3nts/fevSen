@@ -100,5 +100,10 @@ git config --global user.email "lhw150030@utdallas.edu"
 ```
 
 
+## install v4l2-ctl
+```
+sudo apt-get install v4l-utils
+```
+
 
 
