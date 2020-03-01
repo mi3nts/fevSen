@@ -61,15 +61,6 @@ sudo apt-get install libhdf5
 sudo pip3 install h5py
 ```
 
-## Install libuvc 
-```
-git clone https://github.com/groupgets/libuvc
-cd libuvc
-mkdir build
-cd build
-cmake ..
-make && sudo make install
-```
 ## get the latest opencv 
 ```
 sudo apt-get install python3-opencv
@@ -82,7 +73,7 @@ sudo apt-get install guvcview
 ## Install libvuc on the home folder 
 ```
 cd ~
-git clone https://github.com/ktossell/libuvc
+git clone https://github.com/groupgets/libuvc
 cd libuvc
 mkdir build
 cd build
