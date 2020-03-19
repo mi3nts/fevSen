@@ -18,7 +18,9 @@ import time
 import numpy, scipy.io
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
+from PIL import Image
 
+from matplotlib import cm
 
 
 def py_frame_callback(frame, userptr):
@@ -143,134 +145,46 @@ def saveWebCamImage(capture,imageName):
     print(imageName)
     cv2.imwrite(imageName,image)
 
-
-
-
 def grab_frame(cap):
     ret,frame = cap.read()
     return cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
-def update(i):
-
-
-    dateTime = datetime.datetime.now()
-    thermalCelcius=[]
-    leftImage=[]
-    rightImage = []
-
-    thermalDataPre = q.get(True, 500)
-    retLeft, leftImage = capLeft.read()
-    retRight, rightImage = capRight.read()
-
-    thermalData   = cv2.resize(thermalDataPre[:,:], (640, 480))
-    thermalKelvin = thermalData
-    thermalCelcius = ktoc(thermalData)
-
-
-    frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
-                                                        stereoParams['mapYLeft'],\
-                                                            cv2.INTER_CUBIC)
-    frameRightRect   = cv2.remap(rightImage,stereoParams['mapXRight'],\
-                                                        stereoParams['mapYRight'],
-                                                            cv2.INTER_CUBIC)
-
-    frameCelciusRect = cv2.undistort(\
-                                    thermalCelcius,\
-                                    thermalParams['mtxThermal'],\
-                                    thermalParams['distThermal']
-                                    , None,\
-                                    thermalParams['newcameramtx']\
-                                    )
-
-            #
-    disparityPre     = leftMatcher.compute(frameLeftRect,frameRightRect)
-    distanceImage    = 30590*(disparityPre**-0.9453)
-
-    maskCelcliusAll       = []
-    celciusImageAll       = []
-    maskedCelciusImageAll = []
-    finalCelciusImage     = np.zeros((480, 640))
-
-    rows,cols,ch = frameLeftRect.shape
-
-    for indexIn in range(len(homographyAll)):
-        maskCelclius          = (cutOffs[indexIn]<=distanceImage)&\
-                                        (distanceImage<cutOffs[indexIn+1])
-        maskCelcliusAll.append(maskCelclius)
-        celciusImage          = cv2.warpPerspective(frameCelciusRect,\
-                                                                 homographyAll[indexIn],\
-                                                                  (cols,rows))
-        celciusImageAll.append(celciusImage)
-        maskedCelciusImage    = np.multiply(maskCelclius,celciusImage)
-        maskedCelciusImageAll.append(maskedCelciusImage)
-        finalCelciusImage = finalCelciusImage + maskedCelciusImage
-
-    distanceImageF = cv2.remap(distanceImage ,stereoParams['mapXLeftReverse'],\
-                                            stereoParams['mapYLeftReverse'],\
-                                                    cv2.INTER_CUBIC)
-    finalCelciusImageF = cv2.remap(finalCelciusImage ,stereoParams['mapXLeftReverse'],\
-                                        stereoParams['mapYLeftReverse'],\
-                                                cv2.INTER_CUBIC)
-
-
-    threeWayImageName     = "threeWayImageDataSets/"+ getImagePathTailHdf5(dateTime,'hdf5ThreeWay')
-
-    im1.set_data(cv2.cvtColor(leftImage, cv2.COLOR_BGR2RGB))
-    im2.set_data(cv2.cvtColor(rightImage, cv2.COLOR_BGR2RGB))
-    im3.set_data(distanceImageF)
-    im4.set_data(finalCelciusImageF *7)
-
-    # hf = h5py.File(threeWayImageName, 'w')
-    #
-    # hf.create_dataset('left' , data=leftImage)
-    # hf.create_dataset('celcius', data=finalCelciusImageF)
-    # hf.create_dataset('distance', data=distanceImageF)
-    # hf.close()
-
-
+def open_cam_usb(dev, width, height):
+    # We want to set width and height here, otherwise we could just do:
+    #     return cv2.VideoCapture(dev)
+    gst_str = ('v4l2src device=/dev/video{} ! '
+               'video/x-raw, width=(int){}, height=(int){} ! '
+               'videoconvert ! appsink').format(dev, width, height)
+    return cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
 myCmd = os.popen('v4l2-ctl --list-devices').read()
 
 leftCamIndex  = getLeftWebCamIndex(myCmd)[1]
 rightCamIndex  = getRightWebCamIndex(myCmd)[1]
 
+print(leftCamIndex)
+print(rightCamIndex)
 
 
-#Initiate the two cameras
-capLeft       = cv2.VideoCapture(leftCamIndex)
-capRight      = cv2.VideoCapture(rightCamIndex)
+# #Initiate the cameras
+print("Initiating Visual Cameras")
+capLeft = open_cam_usb(leftCamIndex,640,480)
+capRight = open_cam_usb(rightCamIndex,640,480)
 
-
+print("Initiating the Thermal Camera")
 BUF_SIZE = 2
 q = Queue(BUF_SIZE)
 
-
-
-
-# cv2.destroyAllWindows()
-
-ax1 = plt.subplot(2,2,1)
-plt.title("Left Image")
-
-ax2 = plt.subplot(2,2,2)
-plt.title("Right Image")
-
-ax3 = plt.subplot(2,2,3)
-plt.title("Depth Image")
-
-ax4 =plt.subplot(2,2,4)
-plt.title("Thermal Image")
-
-#create two image plots
-im1 = ax1.imshow(grab_frame(capLeft))
-im2 = ax2.imshow(grab_frame(capRight))
-im3 = ax3.imshow(grab_frame(capLeft))
-im4 = ax4.imshow(grab_frame(capRight))
-
-# Loading Parametors
+# # Loading Parametors
+print("Loading Stereo Parametors ")
 stereoParams  = pickle.load(open("stereoParams_Feb_25_2020.p", "rb"))
+
+print("Loading Thermal Parametors ")
 thermalParams = pickle.load(open("thermalParams_Feb_12_2020.p", "rb"))
+
+print("Loading Overlay Parametors ")
 overlayParams = pickle.load(open("overlayParams_Feb_20_2020.p", "rb"))
+
 
 cutOffs       = overlayParams['cutOffs ']
 homographyAll = overlayParams['homographyAll']
@@ -299,6 +213,7 @@ leftMatcher = cv2.StereoSGBM_create(
 
 
 def main():
+  print("Entering the main function")
   ctx = POINTER(uvc_context)()
   dev = POINTER(uvc_device)()
   devh = POINTER(uvc_device_handle)()
@@ -339,22 +254,132 @@ def main():
       if res <0:
         print("uvc_start_streaming failed: {0}".format(res))
         exit(1)
-
-
-      myCmd = os.popen('v4l2-ctl --list-devices').read()
-
-      leftCamIndex  = getLeftWebCamIndex(myCmd)[1]
-      rightCamIndex  = getRightWebCamIndex(myCmd)[1]
-
+      nn = 50
       try:
         startTime = time.time()
         # your code
-        ani = FuncAnimation(plt.gcf(), update, interval=300)
-        plt.show()
+        for n in range(nn):
+          print(n)
+          capLeft.read()
+          capRight.read()
+
+        while(True):
+  
+
+            dateTime = datetime.datetime.now()
+            print(dateTime)
+            # Capture frame-by-frame
+
+            thermalDataPre01 = q.get(True, 500)
+            retLeft , leftImage  = capLeft.read()
+            thermalDataPre00= q.get(True, 500)
+            retRight, rightImage = capRight.read()
+            thermalDataPre10= q.get(True, 500)
+         
+ 
+            thermalData   = cv2.resize(thermalDataPre00[:,:], (640, 480))
+ 
+            thermalKelvin = thermalData
+            thermalCelcius = ktoc(thermalData)
+        
+            frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
+                                                         stereoParams['mapYLeft'],\
+                                                                    cv2.INTER_CUBIC)
+            frameRightRect   = cv2.remap(rightImage,stereoParams['mapXRight'],\
+                                                                stereoParams['mapYRight'],
+                                                                    cv2.INTER_CUBIC)
+
+            frameCelciusRect = cv2.undistort(\
+                                            thermalCelcius,\
+                                            thermalParams['mtxThermal'],\
+                                            thermalParams['distThermal']
+                                            , None,\
+                                            thermalParams['newcameramtx']\
+                                            )
+
+             
+            disparityPre     = leftMatcher.compute(frameLeftRect,frameRightRect)
+            distanceImage    = 30590*(disparityPre**-0.9453)
+
+            maskCelcliusAll       = []
+            celciusImageAll       = []
+            maskedCelciusImageAll = []
+            finalCelciusImage     = np.zeros((480, 640))
+
+            rows,cols,ch = frameLeftRect.shape
+
+            for indexIn in range(len(homographyAll)):
+                maskCelclius          = (cutOffs[indexIn]<=distanceImage)&\
+                                                (distanceImage<cutOffs[indexIn+1])
+                maskCelcliusAll.append(maskCelclius)
+                celciusImage          = cv2.warpPerspective(frameCelciusRect,\
+                                                                        homographyAll[indexIn],\
+                                                                          (cols,rows))
+                celciusImageAll.append(celciusImage)
+                maskedCelciusImage    = np.multiply(maskCelclius,celciusImage)
+                maskedCelciusImageAll.append(maskedCelciusImage)
+                finalCelciusImage = finalCelciusImage + maskedCelciusImage
+
+            distanceImageF = cv2.remap(distanceImage ,stereoParams['mapXLeftReverse'],\
+                                                    stereoParams['mapYLeftReverse'],\
+                                                            cv2.INTER_CUBIC)
+            finalCelciusImageF = cv2.remap(finalCelciusImage ,stereoParams['mapXLeftReverse'],\
+                                                stereoParams['mapYLeftReverse'],\
+                                                        cv2.INTER_CUBIC)
+
+         
+
+            threeWayImageName     = "threeWayImageDataSets/"+ getImagePathTailHdf5(dateTime,'hdf5ThreeWay3')
+            # print(threeWayImageName)
+            # hf = h5py.File(threeWayImageName, 'w')
+           
+            # hf.create_dataset('left' , data=leftImage)
+            # hf.create_dataset('thermal', data=thermalData)
+            # hf.create_dataset('distance', data=rightImage)
+            # hf.close()
+
+
+            plt.subplot(221)
+            plt.imshow(cv2.cvtColor(leftImage, cv2.COLOR_BGR2RGB))
+            plt.title("Left Image")
+
+            plt.subplot(222)
+            plt.imshow(cv2.cvtColor(rightImage, cv2.COLOR_BGR2RGB))
+            plt.title("Right Image")
+            plt.subplot(223)
+            plt.imshow(distanceImageF,cmap='rainbow')
+            plt.title("Depth Image")
+            plt.imshow(finalCelciusImageF,cmap='jet')
+            plt.title("Thermal Image")
+            cbar1 =  plt.colorbar();
+            cbar1.ax.set_ylabel(r"Temperature(C)", rotation=270,labelpad=20)
+            figManager = plt.get_current_fig_manager()
+            # figManager.window.showMaximized()
+            plt.show(block=False)
+            plt.pause(5)
+            plt.close()
+
+
+
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                capLeft.release()
+                capRight.release()
+                cv2.destroyAllWindows()
+                break
+
+           
+
+        # When everything done, release the capture
         capLeft.release()
         capRight.release()
-
         cv2.destroyAllWindows()
+            
+    
+        # ani = FuncAnimation(plt.gcf(), update, interval=300)
+        # plt.show()
+   
+
       finally:
         libuvc.uvc_stop_streaming(devh)
 

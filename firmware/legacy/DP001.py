@@ -340,7 +340,7 @@ def main():
 
       myCmd = os.popen('v4l2-ctl --list-devices').read()
 
-      leftCamIndex  = getLeftWebCamIndex(myCmd)[1]
+      leftCamIndex   = getLeftWebCamIndex(myCmd)[1]
       rightCamIndex  = getRightWebCamIndex(myCmd)[1]
 
       try:
