@@ -1,8 +1,7 @@
 import datetime
 
-
-def getImagePathTailHdf5Mod(dateTime,labelIn):
-    mod = round(dateTime.microsecond/10000)
+def getImagePathTailHdf5Mod2(dateTime,labelIn):
+ 
     pathTail = labelIn+"/"+\
     str(dateTime.year).zfill(4) + \
     "_" +str(dateTime.month).zfill(2) + \
@@ -10,13 +9,11 @@ def getImagePathTailHdf5Mod(dateTime,labelIn):
     "_" +str(dateTime.hour).zfill(2) + \
     "_" +str(dateTime.minute).zfill(2)+ \
     "_" +str(dateTime.second).zfill(2)+ \
-    "_" +str(mod).zfill(2)+ \
+    "_" +str(dateTime.microsecond)[1]+ \
     "_"+labelIn+".h5"
 
     return pathTail;
 
 while(True):
     dateTime = datetime.datetime.now()  
-    # print(dateTime)
-    if(round(dateTime.microsecond/10000))%20==0:
-        print(getImagePathTailHdf5Mod(dateTime,"LK"))
+    print(getImagePathTailHdf5Mod2(dateTime,"LK"))
