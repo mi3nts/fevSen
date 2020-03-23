@@ -60,7 +60,7 @@ directory = "/home/teamlary/mintsData/"
 
 print("Defining Lag Intervals")
 lag = datetime.timedelta(seconds=-2) 
-add = datetime.timedelta(seconds=.5) 
+add = datetime.timedelta(seconds=.4) 
 
 
 def main():
@@ -84,9 +84,11 @@ def main():
                     print(dateTime1)
                     distance, celcius = overlayReturn(left,right,thermal)
                     hdf5Saver(valName,left,celcius,distance)
+                    # SYNC CODE GOES HERE
 
         except:
             print("An exception occurred")
+            time.sleep(1)
 
 
 def hdf5Reader(fileName):

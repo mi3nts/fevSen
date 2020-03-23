@@ -23,6 +23,7 @@ from PIL import Image
 
 
 directory = "/home/teamlary/mintsData/val/"
+# directory = "/home/teamlary/mintsData/valMarch20/"
 
 # Creating a subplot 
 ax1 = plt.subplot(2,2,1)
@@ -41,7 +42,7 @@ initial = True
 noneCompare = None 
 plt.ion()
 
-alpha = .5
+alpha = .7
 beta = (1.0 - alpha)
 
 print("Listing all files")
@@ -77,16 +78,18 @@ for filename in sorted(os.listdir(directory)):
                 im2 = ax2.imshow(distance,cmap='rainbow')
                 im3 = ax3.imshow(celcius,cmap='jet')
                 im4 = ax4.imshow(overlay)
-                initial = False
+                plt.pause(2) 
+                # initial = False
             else:
                 im1.set_data(left)
                 im2.set_data(distance)
                 im3.set_data(celcius)
                 im4.set_data(overlay)
-                plt.pause(1)    
+            
+                plt.pause(.01)    
 
 plt.ioff()
 plt.show()
-plot.close()
+plt.close()
 
 
