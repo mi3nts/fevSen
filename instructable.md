@@ -80,7 +80,7 @@ cd build
 cmake ..
 make && sudo make install
 ```
-Then move the libuvc.so file to the scr folder from the build folder. Then go back to the fevsev repo and run `python3 uvc-deviceinfr.py` after connecting the thermal module. This will provide the serial number for the thermal module. 
+Then move the libuvc.so file to the scr folder from the build folder. Then go back to the fevsev repo and run `python3 uvc-deviceinfr.py` after connecting the thermal module. This will provide the serial number for the thermal module. Change line 15/16 on uvctypes.py on the fevSen repo accordingly 
 
 
 
