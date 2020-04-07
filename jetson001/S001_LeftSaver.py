@@ -100,16 +100,14 @@ def main():
                 dateTime          = datetime.datetime.now()
 
                 retLeft, left     = capLeft.read()
-                print(dateTime)
+  
                 if not retLeft:
                     print('Empty Left frame')
                 else: 
                     if (imageSave):
                         imageName   = directory + cr.getImagePathTail(dateTime,'left')
-                        hf = h5py.File(imageName, 'w')
-                        hf.create_dataset('left', data=left)
-                        hf.close()
-
+                        cv2.imwrite(imageName,left)
+                        print("Saving: {}".format(imageName))
                         
                     if(display):
                         cv2.imshow('Left Frame' , imutils.resize(left, width=640))

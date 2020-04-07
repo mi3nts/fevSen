@@ -21,15 +21,12 @@ import cv2
 import pickle
 import numpy as  np
 from matplotlib import pyplot as plt
-
 from scipy.io import loadmat
 import datetime
 import os,sys,inspect
 from os import path
 import h5py
 import imutils
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
-sys.path.insert(0,parentdir)
 from mintsJetson import camReader as cr
 
 cr.printLabel("User Defined Variables")

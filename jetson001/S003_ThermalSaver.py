@@ -32,7 +32,9 @@ import time
 import imutils
 import numpy, scipy.io
 from imutils.video import WebcamVideoStream
+
 from mintsJetson import camReader as cr
+
 import h5py
 
 cr.printMINTS("fevSen")
@@ -40,7 +42,7 @@ cr.printMINTS("fevSen")
 cr.printLabel("Logging Inputs")
 
 imageSave      = True
-display        = True
+display        = False
 
 directory = "/home/pyimagesearch/mintsData/jetson001/"
 
@@ -103,7 +105,6 @@ def main():
                 exit(1)
 
             try:
-                startTime = time.time()
                 cr.printLabel("Initiating Checks")
                 for n in range(10):
                     print("Check: " + str(n+1))
@@ -113,11 +114,12 @@ def main():
                 while True:
                     dateTime          = datetime.datetime.now()
                     thermal           = q.get(True, 500)
-                    print(dateTime)
+     
                   
                     if(imageSave):
-                        thermalImageName   = directory + cr.getImagePathTailHdf5(dateTime,'thermal')
-                        hf = h5py.File(thermalImageName, 'w')
+                        imageName   = directory + cr.getImagePathTailHdf5(dateTime,'thermal')
+                        print("Saving: {}".format(imageName))
+                        hf = h5py.File(imageName, 'w')
                         hf.create_dataset('thermal', data=thermal)
                         hf.close()
 

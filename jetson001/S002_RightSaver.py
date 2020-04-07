@@ -32,7 +32,9 @@ import time
 import imutils
 import numpy, scipy.io
 from imutils.video import WebcamVideoStream
+
 from mintsJetson import camReader as cr
+
 import h5py
 
 cr.printMINTS("fevSen")
@@ -106,9 +108,8 @@ def main():
                 else: 
                     if (imageSave):
                         imageName   = directory + cr.getImagePathTail(dateTime,'right')
-                        hf = h5py.File(imageName, 'w')
-                        hf.create_dataset('right', data=right)
-                        hf.close()
+                        cv2.imwrite(imageName,right)
+                        print("Saving: {}".format(imageName))
 
                         
                     if(display):
