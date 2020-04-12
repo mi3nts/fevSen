@@ -16,37 +16,17 @@
 #
 #  ***************************************************************************
 
-import h5py
+from matplotlib import pyplot as plt
 import cv2
 import os
 import numpy as np
 from imutils.video import WebcamVideoStream
 import imutils
 import math
+import h5py
 from scipy.io import loadmat
-from matplotlib import pyplot as plt
-# def py_frame_callback(frame, userptr):
+import datetime
 
-#   array_pointer = cast(frame.contents.data, POINTER(c_uint16 * (frame.contents.width * frame.contents.height)))
-#   data = np.frombuffer(
-#     array_pointer.contents, dtype=np.dtype(np.uint16)
-#   ).reshape(
-#     frame.contents.height, frame.contents.width
-#   ) # no copy
-
-#   # data = np.fromiter(
-#   #   frame.contents.data, dtype=np.dtype(np.uint8), count=frame.contents.data_bytes
-#   # ).reshape(
-#   #   frame.contents.height, frame.contents.width, 2
-#   # ) # copy
-
-#   if frame.contents.data_bytes != (2 * frame.contents.width * frame.contents.height):
-#     return
-
-#   if not q.full():
-#     q.put(data)
-
-# # PTR_PY_FRAME_CALLBACK = CFUNCTYPE(None, POINTER(uvc_frame), c_void_p)(py_frame_callback)
 
 def ktof(val):
   return (1.8 * ktoc(val) + 32.0)
@@ -272,95 +252,6 @@ def mat2PyGetImageCornersStereo(leftImagePoints,rightImagePoints,objp,\
                                            rightImageCorners[imageIndex][cornerIndex]
     return leftCornersArranged,rightCornersArranged, objPoints;
 
-
-def scaleStereo(left,right,widthIn):
-    return imutils.resize(left,width=widthIn),imutils.resize(right,width=widthIn);
-def plotSubplot(leftImage,distanceCM,celcius):
-
-    cmap = plt.cm.jet
-    norm = plt.Normalize(vmin=celcius.min(), vmax=celcius.max())
-    thermal = cmap(norm(celcius))
-    plt.imsave('thermal.png',thermal)
-    thermal = cv2.cvtColor(cv2.imread('thermal.png'), cv2.COLOR_BGR2RGB)
-    alpha = .5
-    beta = (1.0 - alpha)
-    overlay = cv2.addWeighted(leftImage,alpha,thermal,beta,0)
-    os.remove('thermal.png')
-    plt.subplot(221)
-    plt.title("Visual")
-    plt.imshow(cv2.cvtColor(leftImage, cv2.COLOR_BGR2RGB))
-    plt.subplot(222)
-    plt.title("Distance")
-    plt.imshow(distanceCM,cmap='rainbow')
-    plt.subplot(223)
-    plt.title("Thermal")
-    plt.imshow(celcius,cmap='jet')
-    plt.subplot(224)
-    plt.title("Overlay")
-    plt.imshow(overlay)
-    plt.suptitle("Thermal Visual Overlay")
-    plt.show()
-def overlayReturn002(leftImageName,rightImageName,thermalImageName,stereoParams,thermalParams,leftMatcher,overlayParams):
-
-
-    cutOffs       = overlayParams['cutOffs']
-    homographyAll = overlayParams['homographyAll']
-    fitA          = overlayParams['fitA']
-    fitB          = overlayParams['fitB']
-
-
-    leftImage,rightImage    = scaleStereo(cv2.imread(leftImageName),\
-                                            cv2.imread(rightImageName),\
-                                                648)
-
-    hf      = h5py.File(thermalImageName, 'r')
-    thermal = np.array(hf.get('thermal'))
-
-    thermalData   = cv2.resize(thermal[:,:], (640, 480))
-    thermalCelcius = ktoc(thermalData)
-
-    frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
-                                                            stereoParams['mapYLeft'],\
-                                                                        cv2.INTER_CUBIC)
-    frameRightRect   = cv2.remap(rightImage,stereoParams['mapXRight'],\
-                                                                    stereoParams['mapYRight'],
-                                                                        cv2.INTER_CUBIC)
-
-    frameCelciusRect = cv2.undistort(\
-                                        thermalCelcius,\
-                                        thermalParams['mtxThermal'],\
-                                        thermalParams['distThermal']
-                                        , None,\
-                                        thermalParams['newcameramtx']\
-                                        )
-
-    disparityPre     = leftMatcher.compute(frameLeftRect,frameRightRect)
-    distanceImage    = overlayParams['fitA']*(disparityPre**overlayParams['fitB'])
-
-
-
-
-    rows,cols,ch = frameLeftRect.shape
-    finalCelciusImage     = np.zeros((rows,cols))
-
-    for indexIn in range(len(homographyAll)):
-        maskCelclius          = (cutOffs[indexIn][0]<=distanceImage)&\
-                                                    (distanceImage<cutOffs[indexIn][1])
-
-        celciusImage          = cv2.warpPerspective(frameCelciusRect,\
-                                                                homographyAll[indexIn],\
-                                                                (cols,rows))
-        maskedCelciusImage    = np.multiply(maskCelclius,celciusImage)
-        finalCelciusImage     = finalCelciusImage + maskedCelciusImage
-
-    distanceImageF = cv2.remap(distanceImage ,stereoParams['mapXLeftReverse'],\
-                                                        stereoParams['mapYLeftReverse'],\
-                                                                cv2.INTER_CUBIC)
-    finalCelciusImageF = cv2.remap(finalCelciusImage ,stereoParams['mapXLeftReverse'],\
-                                                    stereoParams['mapYLeftReverse'],\
-                                                            cv2.INTER_CUBIC)
-
-    return leftImage, distanceImageF, finalCelciusImageF;
 
 
 
@@ -915,10 +806,10 @@ def saveUndistortedForMatThermal(thermalFileNames,thermalParams):
                                     thermalParams['newcameramtx']\
                                     )
 
-        newThermal  = thermalFileNamesCurrent.replace("thermal", "thermaUndistorted")
+        newThermal  = thermalFileNamesCurrent.replace("thermal", "thermalUndistorted")
 
         print("Writing Rectified Thermal  Image of '{}' as '{}'".format(thermalFileNamesCurrent,newThermal))
-        # cv2.imwrite(newThermal,    imThermalRemapped);
+        cv2.imwrite(newThermal,    imThermalRemapped);
 
 
 def getReplacedFileNames(leftFileNames,replace,replaceWith):
@@ -1014,6 +905,224 @@ def mat2PyGetCornerPointsMono(imagePoints,\
         fileNames.append(imageFileName[0])
 
     return cornersArranged,fileNames;
+
+def scaleStereo(left,right,widthIn):
+    return imutils.resize(left,width=widthIn),imutils.resize(right,width=widthIn);
+
+def plotSubplot(leftImage,distanceCM,celcius):
+
+    cmap = plt.cm.jet
+    norm = plt.Normalize(vmin=celcius.min(), vmax=celcius.max())
+    thermal = cmap(norm(celcius))
+    plt.imsave('thermal.png',thermal)
+    thermal = cv2.cvtColor(cv2.imread('thermal.png'), cv2.COLOR_BGR2RGB)
+    alpha = .5
+    beta = (1.0 - alpha)
+    overlay = cv2.addWeighted(leftImage,alpha,thermal,beta,0)
+    os.remove('thermal.png')
+    plt.subplot(221)
+    plt.title("Visual")
+    plt.imshow(cv2.cvtColor(leftImage, cv2.COLOR_BGR2RGB))
+    plt.subplot(222)
+    plt.title("Distance")
+    plt.imshow(distanceCM,cmap='rainbow')
+    plt.subplot(223)
+    plt.title("Thermal")
+    plt.imshow(celcius,cmap='jet')
+    plt.subplot(224)
+    plt.title("Overlay")
+    plt.imshow(overlay)
+    plt.suptitle("Thermal Visual Overlay")
+    plt.show()
+
+
+# Added on April 12th 2020 by Lakitha
+
+def getCurrentFeverSensorInfoCelcius(leftImageName,rightImageName,thermalImageName,\
+                                        stereoParams,thermalParams,overlayParams,\
+                                            leftMatcher,scalingFactor,coordsIn):
+    leftImage,distanceCM,rows,cols    = getDistanceImage(leftImageName,rightImageName,stereoParams,leftMatcher,overlayParams)
+    frameCelciusRect                  = getUndistortedThermalImageCelcius(thermalImageName,thermalParams);
+    return getResultsInCMandTemperatureForAllCoords(leftImage,frameCelciusRect,distanceCM,\
+                                                                overlayParams,stereoParams,\
+                                                                    rows,cols,scalingFactor,coordsIn);
+
+def getCurrentFeverSensorInfoFarenheit(leftImageName,rightImageName,thermalImageName,\
+                                        stereoParams,thermalParams,overlayParams,\
+                                            leftMatcher,scalingFactor,coordsIn):
+    leftImage,distanceCM,rows,cols    = getDistanceImage(leftImageName,rightImageName,stereoParams,leftMatcher,overlayParams)
+    frameFarenRect                  = getUndistortedThermalImageFaren(thermalImageName,thermalParams);
+    return getResultsInCMandTemperatureForAllCoords(leftImage,frameFarenRect,distanceCM,\
+                                                                overlayParams,stereoParams,\
+                                                                    rows,cols,scalingFactor,coordsIn);
+
+def getResultsInCMandTemperatureForAllCoords(leftImage,frameTempRect,distanceCM,\
+                                            overlayParams,stereoParams,\
+                                                rows,cols,scalingFactor,coordsIn):
+    temperatureAndDistance = []
+    for currentCoords in coordsIn:
+        temperatureAndDistance.append(getResultsInCMandTemperatureForCurrentCoords(\
+                                                        leftImage,frameTempRect,distanceCM,\
+                                                            overlayParams,stereoParams,\
+                                                                rows,cols,scalingFactor,currentCoords))
+    return temperatureAndDistance;
+
+def getResultsInCMandTemperatureForCurrentCoords(leftImage,temperatureRect,distanceCM,\
+                                                    overlayParams,stereoParams,\
+                                                        rows,cols,scalingFactor,currentCoords):
+
+    avgDistanceCM       = getAverageDistance(distanceCM,currentCoords,scalingFactor)
+    overlayIndex        = getOverlayIndex(avgDistanceCM)
+    temperature         = getTemperatureImageForIndex(temperatureRect,overlayParams,\
+                                            stereoParams,overlayIndex,rows,cols)
+    averageTemperature  = getAverageTemperature(temperature ,currentCoords,scalingFactor)
+    return (avgDistanceCM,averageTemperature);
+
+def getDistanceImage(leftImageName,rightImageName,stereoParams,leftMatcher,overlayParams):
+
+    leftImage,rightImage    = scaleStereo(cv2.imread(leftImageName),\
+                                                cv2.imread(rightImageName),\
+                                                    648)
+    rows,cols,ch = leftImage.shape
+    frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
+                                                            stereoParams['mapYLeft'],\
+                                                                        cv2.INTER_CUBIC)
+    frameRightRect   = cv2.remap(rightImage,stereoParams['mapXRight'],\
+                                                                    stereoParams['mapYRight'],
+                                                                        cv2.INTER_CUBIC)
+
+    distanceCM   = cv2.remap(overlayParams['fitA']*(leftMatcher.compute(frameLeftRect,frameRightRect)**overlayParams['fitB']) ,stereoParams['mapXLeftReverse'],\
+                                                        stereoParams['mapYLeftReverse'],\
+                                                                cv2.INTER_CUBIC)
+    return leftImage,distanceCM,rows,cols;
+
+def getAverageDistance(distanceCM,coords,scalingFactor):
+    coordsIn = (round(coords[0]/scalingFactor),round(coords[1]/scalingFactor),\
+                    round(coords[2]/scalingFactor),round(coords[3]/scalingFactor))
+    cropped = distanceCM[coordsIn[1]:coordsIn[3],coordsIn[0]:coordsIn[2]]
+    return np.nanmean(np.nanmean(cropped))
+
+def getAverageTemperature(temperature,coords,scalingFactor):
+    coordsIn = (round(coords[0]/scalingFactor),round(coords[1]/scalingFactor),\
+                    round(coords[2]/scalingFactor),round(coords[3]/scalingFactor))
+    cropped = temperature[coordsIn[1]:coordsIn[3],coordsIn[0]:coordsIn[2]]
+    cropped[cropped == 0] = np.nan
+    return np.nanmean(np.nanmean(cropped))
+
+
+def scaleStereo(left,right,widthIn):
+    return imutils.resize(left,width=widthIn),imutils.resize(right,width=widthIn);
+
+def getOverlayIndex(avgDistanceCM):
+    indexPre        = round((avgDistanceCM/10) -4)
+    if(indexPre<0):
+        return 0;
+    elif (indexPre > 26):
+        return 26;
+    else:
+        return int(indexPre);
+
+
+def getUndistortedThermalImageCelcius(thermalImageName,thermalParams):
+    hf             = h5py.File(thermalImageName, 'r')
+    thermal        = np.array(hf.get('thermal'))
+    thermalData    = cv2.resize(thermal[:,:], (640, 480))
+    thermalCelcius = ktoc(thermalData)
+    return cv2.undistort(\
+                                            thermalCelcius,\
+                                            thermalParams['mtxThermal'],\
+                                            thermalParams['distThermal']
+                                            , None,\
+                                            thermalParams['newcameramtx']\
+                                            );
+
+def getUndistortedThermalImageFaren(thermalImageName,thermalParams):
+    hf             = h5py.File(thermalImageName, 'r')
+    thermal        = np.array(hf.get('thermal'))
+    thermalData    = cv2.resize(thermal[:,:], (640, 480))
+    thermalTemp = ktof(thermalData)
+    return cv2.undistort(\
+                                            thermalTemp,\
+                                            thermalParams['mtxThermal'],\
+                                            thermalParams['distThermal']
+                                            , None,\
+                                            thermalParams['newcameramtx']\
+                                            );
+
+
+
+def getTemperatureImageForIndex(frameCelciusRect,overlayParams,stereoParams,\
+                                        overlayIndex,rows,cols):
+
+    celciusImage          = cv2.warpPerspective(frameCelciusRect,\
+                                                                    overlayParams['homographyAll'][overlayIndex],\
+                                                                    (cols,rows))
+
+    return cv2.remap(celciusImage ,stereoParams['mapXLeftReverse'],\
+                                                    stereoParams['mapYLeftReverse'],\
+                                                            cv2.INTER_CUBIC);
+
+def overlayReturn002(leftImageName,rightImageName,thermalImageName,stereoParams,thermalParams,leftMatcher,overlayParams):
+
+    cutOffs       = overlayParams['cutOffs']
+    homographyAll = overlayParams['homographyAll']
+    fitA          = overlayParams['fitA']
+    fitB          = overlayParams['fitB']
+
+
+    leftImage,rightImage    = scaleStereo(cv2.imread(leftImageName),\
+                                            cv2.imread(rightImageName),\
+                                                648)
+
+    hf      = h5py.File(thermalImageName, 'r')
+    thermal = np.array(hf.get('thermal'))
+
+    thermalData   = cv2.resize(thermal[:,:], (640, 480))
+    thermalCelcius = ktoc(thermalData)
+
+    frameLeftRect    = cv2.remap(leftImage ,stereoParams['mapXLeft'],\
+                                                            stereoParams['mapYLeft'],\
+                                                                        cv2.INTER_CUBIC)
+    frameRightRect   = cv2.remap(rightImage,stereoParams['mapXRight'],\
+                                                                    stereoParams['mapYRight'],
+                                                                        cv2.INTER_CUBIC)
+
+    frameCelciusRect = cv2.undistort(\
+                                        thermalCelcius,\
+                                        thermalParams['mtxThermal'],\
+                                        thermalParams['distThermal']
+                                        , None,\
+                                        thermalParams['newcameramtx']\
+                                        )
+
+    disparityPre     = leftMatcher.compute(frameLeftRect,frameRightRect)
+    distanceImage    = overlayParams['fitA']*(disparityPre**overlayParams['fitB'])
+
+
+
+
+    rows,cols,ch = frameLeftRect.shape
+    finalCelciusImage     = np.zeros((rows,cols))
+
+    for indexIn in range(len(homographyAll)):
+        maskCelclius          = (cutOffs[indexIn][0]<=distanceImage)&\
+                                                    (distanceImage<cutOffs[indexIn][1])
+
+        celciusImage          = cv2.warpPerspective(frameCelciusRect,\
+                                                                homographyAll[indexIn],\
+                                                                (cols,rows))
+        maskedCelciusImage    = np.multiply(maskCelclius,celciusImage)
+        finalCelciusImage     = finalCelciusImage + maskedCelciusImage
+
+    distanceImageF = cv2.remap(distanceImage ,stereoParams['mapXLeftReverse'],\
+                                                        stereoParams['mapYLeftReverse'],\
+                                                                cv2.INTER_CUBIC)
+    finalCelciusImageF = cv2.remap(finalCelciusImage ,stereoParams['mapXLeftReverse'],\
+                                                    stereoParams['mapYLeftReverse'],\
+                                                            cv2.INTER_CUBIC)
+
+    return leftImage, distanceImageF, finalCelciusImageF;
+
 
 def printLabel(inputString):
     print(" ")
