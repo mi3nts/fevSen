@@ -45,7 +45,7 @@ highResolution = True
 imageSave      = True
 display        = False
 
-directory = "/home/pyimagesearch/mintsData/jetson001/"
+directory = "/home/pyimagesearch/mintsData/jetson002/"
 width     = 2592
 height    = 1944
 frameRate = 15
@@ -105,28 +105,28 @@ def main():
                 print(dateTime)
                 if not retRight:
                     print('Empty Right frame')
-                else: 
+                else:
                     if (imageSave):
                         imageName   = directory + cr.getImagePathTail(dateTime,'right')
                         cv2.imwrite(imageName,right)
                         print("Saving: {}".format(imageName))
 
-                        
+
                     if(display):
                         cv2.imshow('Right Frame' , imutils.resize(right, width=640))
-                    
+
                 if cv2.waitKey(1)&0xFF == ord('q'):
                     capRight.release()
                     break
-            except KeyboardInterrupt:             
+            except KeyboardInterrupt:
                 capRight.release()
                 print()
                 print("Exiting While Loop:")
                 break
             except:
-                
+
                 print("Unexpected error in Loop:"+EOFError)
-        
+
         capRight.release()
         cr.printLabel("MINTS done")
     except:

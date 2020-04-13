@@ -44,7 +44,7 @@ cr.printLabel("Logging Inputs")
 imageSave      = True
 display        = False
 
-directory = "/home/pyimagesearch/mintsData/jetson001/"
+directory = "/home/pyimagesearch/mintsData/jetson002/"
 
 
 cr.printLabel("Local Directory: {} Assigned".format(directory))
@@ -114,8 +114,8 @@ def main():
                 while True:
                     dateTime          = datetime.datetime.now()
                     thermal           = q.get(True, 500)
-     
-                  
+
+
                     if(imageSave):
                         imageName   = directory + cr.getImagePathTailHdf5(dateTime,'thermal')
                         print("Saving: {}".format(imageName))

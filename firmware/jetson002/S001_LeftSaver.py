@@ -43,7 +43,7 @@ highResolution = True
 imageSave      = True
 display        = False
 
-directory = "/home/pyimagesearch/mintsData/jetson001/"
+directory = "/home/pyimagesearch/mintsData/jetson002/"
 width     = 2592
 height    = 1944
 frameRate = 15
@@ -100,30 +100,30 @@ def main():
                 dateTime          = datetime.datetime.now()
 
                 retLeft, left     = capLeft.read()
-  
+
                 if not retLeft:
                     print('Empty Left frame')
-                else: 
+                else:
                     if (imageSave):
                         imageName   = directory + cr.getImagePathTail(dateTime,'left')
                         cv2.imwrite(imageName,left)
                         print("Saving: {}".format(imageName))
-                        
+
                     if(display):
                         cv2.imshow('Left Frame' , imutils.resize(left, width=640))
-                    
+
                 if cv2.waitKey(1)&0xFF == ord('q'):
                     capLeft.release()
                     break
-            except KeyboardInterrupt:             
+            except KeyboardInterrupt:
                 capLeft.release()
                 print()
                 print("Exiting While Loop:")
                 break
             except:
-                
+
                 print("Unexpected error in Loop:")
-        
+
         capLeft.release()
         cr.printLabel("MINTS done")
     except:

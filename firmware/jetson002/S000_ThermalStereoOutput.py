@@ -13,7 +13,7 @@
 # % #   http://utdmints.info/
 # % #  ***************************************************************************
 #
-#  Step 012: Stereo Thermal Calibration Jetson 001
+#  Step 012: Stereo Thermal Calibration Jetson 002
 
 import cv2
 import pickle
@@ -29,14 +29,15 @@ from mintsJetson import camReader as cr
 
 cr.printMINTS("fevSen")
 cr.printLabel("Loading Parametors")
-stereoParams  = pickle.load(open("dataFiles/DF_003_stereoParams_Jetson001_2020_04_02_19_05_49.p", "rb"))
-thermalParams = pickle.load(open("dataFiles/DF_005_thermalParams_Jetson001_2020_04_02_22_55_59.p", "rb"))
-overlayParams = pickle.load(open("dataFiles/DF_011_overlayParams_Jetson001_2020_04_04_19_19_01.p", "rb"))
+stereoParams           = pickle.load(open("dataFiles/DF_003_stereoParams_Jetson002_Set1_2020_04_10_14_09_01.p", "rb"))
+thermalParams          = pickle.load(open("dataFiles/DF_005_thermalParams_Jetson002_Set1_2020_04_11_16_51_50.p", "rb"))
+overlayParams          = pickle.load(open("dataFiles/DF_011_overlayParams_Jetson002_Set1_2020_04_11_17_42_41.p", "rb"))
+
 
 cr.printLabel("Defining Image Names")
-thermalImageName = "exampleImages/jetson001_thermal.h5"
-leftImageName    = "exampleImages/jetson001_left.jpg"
-rightImageName   = "exampleImages/jetson001_right.jpg"
+thermalImageName = "exampleImages/jetson002_thermal.h5"
+leftImageName    = "exampleImages/jetson002_left.jpg"
+rightImageName   = "exampleImages/jetson002_right.jpg"
 scalingFactor    = 4
 
 cr.printLabel("Defining Coordinates")
@@ -80,6 +81,6 @@ def main():
 
     cr.printLabel("MINTS done")
     cr.printMINTS("fevSen")
-    
+
 if __name__ == '__main__':
   main()
